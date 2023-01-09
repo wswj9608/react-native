@@ -1,4 +1,6 @@
-declare module 'styled-components/native' {
+import 'styled-components';
+
+declare module 'styled-components' {
   export interface DefaultTheme {
     mainBgColor: string;
     textColor: string;

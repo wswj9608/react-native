@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Platform,
   StyleSheet,
   Text,
   useColorScheme,
@@ -19,6 +20,11 @@ export default function App() {
   console.log(width);
   console.log(height);
   const defaultButtonWidth = width / 4;
+
+  const theme: DefaultTheme = {
+    mainBgColor: Platform.OS === 'ios' ? '#263238' : '#FFFFFF',
+    textColor: Platform.OS === 'ios' ? '#FFFFFF' : '#263238',
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -49,11 +55,14 @@ export default function App() {
   );
 }
 
-const AppWrapper = styled.View`
+const AppWrapper = styled(View)`
+  $mainBgColor: ${({ theme }) => theme.mainBgColor};
+
   display: flex;
   flex: 1;
   align-items: stretch;
   justify-content: center;
+  background-color: ${({ theme }) => theme.mainBgColor};
 `;
 
 const ResultContainer = styled.View`
