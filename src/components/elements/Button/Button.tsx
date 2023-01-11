@@ -1,4 +1,3 @@
-import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ButtonProps } from './types';
 import styled from 'styled-components/native';
 import { zinc, amber } from '@/styles/palette';

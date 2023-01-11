@@ -1,54 +1,194 @@
 import { useState } from 'react';
-import {
-  Platform,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  useWindowDimensions,
-  View,
-} from 'react-native';
-import { DefaultTheme, ThemeProvider } from 'styled-components/native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ThemeProvider } from 'styled-components/native';
 import { Button } from '@/components/elements';
 import styled from 'styled-components/native';
-// import { darkTheme, lightTheme } from './styles/theme';
 import { theme } from '@/styles/theme';
 import { StatusBar } from 'expo-status-bar';
 
 export default function App() {
-  const [result, setResult] = useState(0);
-  const { width, height } = useWindowDimensions();
-  console.log(width);
-  console.log(height);
-  const defaultButtonWidth = width / 4;
+  // const [viewResult, setViewResult] = useState('0');
+  // const [currentResult, setCurrentResult] = useState(0);
+  // const [savedResult, setSavedResult] = useState(0);
+  // const [selectOperator, setSelectOperator] = useState('');
+  const { width } = useWindowDimensions();
+  const defaultButtonWidth = (width - 4) / 4;
+  const defaultButtonHeight = defaultButtonWidth;
 
-  const theme: DefaultTheme = {
-    mainBgColor: Platform.OS === 'ios' ? '#263238' : '#FFFFFF',
-    textColor: Platform.OS === 'ios' ? '#FFFFFF' : '#263238',
+  // const numberInputResult = (number: string) => {
+  //   if (currentResult === 0) {
+  //     setViewResult(number);
+  //     setCurrentResult(Number(number));
+  //   } else {
+  //     setViewResult(viewResult + number);
+  //     setCurrentResult(Number(viewResult + number));
+  //   }
+  // };
+
+  // const clearResult = () => {
+  //   if (viewResult !== '0') {
+  //     setViewResult('0');
+  //     setCurrentResult(0);
+  //     setSavedResult(0);
+  //   }
+  // };
+
+  // const operatorHandler = (operator: string) => {
+  //   setSelectOperator(operator);
+  //   setCurrentResult(0);
+  //   setSavedResult(Number(viewResult));
+  // };
+
+  // const operation = () => {
+  //   let operationResult;
+  //   if (selectOperator === '+') {
+  //     operationResult = savedResult + currentResult;
+  //   }
+
+  //   if (selectOperator === '-') {
+  //     operationResult = savedResult - currentResult;
+  //   }
+
+  //   setViewResult(String(operationResult));
+  //   setCurrentResult(0);
+  //   setSavedResult(operationResult as number);
+  // };
+
+  // =================================================== //
+  const [result, setResult] = useState(0);
+  const [formula, setFormula] = useState<(number | string)[]>([]);
+
+  const onPressNumber = (num: number) => {
+    const last = formula[formula.length - 1];
+
+    if (typeof last !== 'number') {
+      setResult(num);
+      setFormula((prev) => [...prev, num]);
+    } else {
+      const newNumber = (last ?? 0) * 10 + num;
+      setResult(newNumber);
+      setFormula((prev) => {
+        prev.pop();
+        return [...prev, newNumber];
+      });
+    }
   };
+
+  const calculate = () => {
+    let claculatedNumber = 0;
+    let operator: string;
+
+    formula.forEach((value) => {
+      if (typeof value === 'string' && ['+', '-'].includes(value)) {
+        operator = value;
+      } else {
+        if (typeof value === 'number') {
+          if (operator === '+') {
+            claculatedNumber += value;
+          } else if (operator === '-') {
+            claculatedNumber -= value;
+          } else {
+            claculatedNumber = value;
+          }
+        }
+      }
+    });
+
+    setResult(claculatedNumber);
+    setFormula([]);
+  };
+
+  const onPressOperator = (operator: string) => {
+    switch (operator) {
+      case 'C':
+        setResult(0);
+        setFormula([]);
+        break;
+      case '=':
+        calculate();
+        break;
+      default:
+        const last = formula[formula.length - 1];
+        if (typeof last === 'string' && ['+', '-'].includes(last)) {
+          setFormula((prev) => {
+            prev.pop();
+            return [...prev, operator];
+          });
+        } else {
+          setFormula((prev) => [...prev, operator]);
+        }
+        break;
+    }
+  };
+
+  const operators = [{ text: 'C' }, { text: '-' }, { text: '+' }];
+  const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
   return (
     <ThemeProvider theme={theme}>
       <StatusBar style={'light'} />
       <AppWrapper>
         <ResultContainer>
-          <ResultText>{result}</ResultText>
+          <ResultText>
+            {result.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+          </ResultText>
         </ResultContainer>
-        <ButtonContainer>
+        <ButtonContainer style={{ height: (width / 4) * 4 }}>
           <NumberContainer>
             <View style={styles.numberArea1}>
+              {numbers.map((number) => (
+                <Button
+                  key={number}
+                  title={number}
+                  onPress={() => onPressNumber(Number(number))}
+                  buttonStyle={{
+                    marginTop: 1,
+                    width: defaultButtonWidth,
+                    height: defaultButtonHeight,
+                  }}
+                  buttonType="number"
+                />
+              ))}
+            </View>
+            <View style={styles.numberArea2}>
               <Button
-                title="1"
-                onPress={() => console.log('1')}
+                title="0"
+                onPress={() => onPressNumber(0)}
                 buttonStyle={{
-                  width: defaultButtonWidth,
-                  height: defaultButtonWidth,
+                  width: defaultButtonWidth * 2 + 1,
+                  height: defaultButtonHeight,
                 }}
                 buttonType="number"
               />
+              <Button
+                title="="
+                onPress={() => onPressOperator('=')}
+                buttonStyle={{
+                  width: defaultButtonWidth,
+                  height: defaultButtonHeight,
+                }}
+                buttonType="operator"
+              />
             </View>
-            <View style={styles.numberArea2}></View>
           </NumberContainer>
-          <OperatorContainer></OperatorContainer>
+          <OperatorContainer>
+            {operators.map((operator) => (
+              <Button
+                key={operator.text}
+                title={operator.text}
+                onPress={() => onPressOperator(operator.text)}
+                buttonStyle={{
+                  marginBottom: 1,
+                  width: defaultButtonWidth,
+                  height:
+                    operator.text === '+'
+                      ? defaultButtonHeight * 2
+                      : defaultButtonHeight,
+                }}
+                buttonType="operator"
+              />
+            ))}
+          </OperatorContainer>
         </ButtonContainer>
       </AppWrapper>
     </ThemeProvider>
@@ -56,13 +196,10 @@ export default function App() {
 }
 
 const AppWrapper = styled(View)`
-  $mainBgColor: ${({ theme }) => theme.mainBgColor};
-
   display: flex;
   flex: 1;
   align-items: stretch;
   justify-content: center;
-  background-color: ${({ theme }) => theme.mainBgColor};
 `;
 
 const ResultContainer = styled.View`
@@ -79,28 +216,24 @@ const ResultText = styled.Text`
 `;
 
 const ButtonContainer = styled.View`
-  flex: 1;
-  background-color: papayawhip;
   flex-direction: row;
+  background-color: #000;
 `;
 
 const NumberContainer = styled.View`
   flex: 3;
-  background-color: antiquewhite;
 `;
 
-const OperatorContainer = styled.View`
-  flex: 1;
-  background-color: aqua;
-`;
+const OperatorContainer = styled.View``;
 
 const styles = StyleSheet.create({
   numberArea1: {
-    flex: 3,
-    backgroundColor: 'red',
+    flexDirection: 'row',
+    flexWrap: 'wrap-reverse',
+    justifyContent: 'space-evenly',
   },
   numberArea2: {
-    flex: 1,
-    backgroundColor: 'blue',
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
   },
 });
